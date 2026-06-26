@@ -1,5 +1,156 @@
 # ⚽ World Cup 2026 — Match Predictor
 
+An end-to-end Machine Learning system that predicts the outcome and scoreline of FIFA World Cup 2026 matches, using real historical data and up-to-date team form.
+
+🔗 **Live app:** _<your Netlify URL>_
+💻 **API:** _<your Render URL>_
+
+---
+
+## 📌 What it does
+
+The user selects two national teams and the model returns:
+
+- **Predicted outcome** — team 1 win / draw / team 2 win
+- **Probabilities** for each outcome
+- **Most likely scoreline** (e.g. 2-0, 1-1, 3-1)
+- **Expected goals** for each team
+- **Details** — FIFA ranking, WC 2026 group points, historical win rate, head-to-head
+
+The interface is available in 6 languages (IT, EN, FR, ES, DE, AR with RTL support).
+
+---
+
+## 🏗️ Architecture
+
+```
+Frontend (HTML/JS, Netlify)
+        │  HTTP / JSON
+        ▼
+Backend (Flask API, Render)
+        │
+        ▼
+ML model (Poisson + 2 Random Forest regressors)
+```
+
+---
+
+## 🧠 Modeling approach
+
+A match scoreline is modeled with the **Poisson distribution**, a well-established approach in sports analytics:
+
+1. Two Random Forest regressors estimate each team's **expected goals** (lambda).
+2. The Poisson distribution builds the **probability matrix** of every possible scoreline.
+3. From this matrix, both the outcome (W/D/L) and the most likely scoreline are derived consistently.
+
+This avoids the contradictions you get from a separate classifier and regressor (e.g. "draw" as the outcome but "2-1" as the scoreline).
+
+**Performance:** ROC-AUC ≈ 0.74 on outcome classification. An honest figure for football, where unpredictability is part of the game.
+
+---
+
+## 📊 The data (data fusion)
+
+The training dataset merges three different sources:
+
+| Source | Content |
+|--------|---------|
+| [martj42/international_results](https://github.com/martj42/international_results) | ~49,000 international matches since 1872 |
+| FIFA ranking | Rankings and points updated to June 2026 |
+| WC 2026 dataset | Team form in the ongoing group stage |
+
+### Feature engineering
+
+The most predictive features were hand-built:
+
+- **Recent form** — win rate, goals scored/conceded over the last 20 matches
+- **Ranking and FIFA points difference** between the two teams
+- **Head-to-head** historical record
+- **WC 2026 group form** — points and goal difference
+
+---
+
+## 🗂️ Project structure
+
+```
+.
+├── data/                   # CSV datasets (historical + WC 2026)
+├── models/                 # trained models (.joblib)
+├── clean.py                # cleaning + dataset construction
+├── train.py                # model training
+├── predict.py              # prediction logic (Poisson)
+├── app.py                  # Flask API
+├── index.html              # frontend web app
+├── translations.json       # multilingual translations
+├── requirements.txt
+└── render.yaml             # Render deploy config
+```
+
+---
+
+## 🚀 Running locally
+
+```bash
+# 1. virtual environment
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS / Linux
+
+# 2. dependencies
+pip install -r requirements.txt
+
+# 3. (optional) rebuild dataset and models
+python clean.py
+python train.py
+
+# 4. start the API
+python app.py
+```
+
+The API runs on `http://127.0.0.1:5000`.
+
+### Example request
+
+```bash
+POST /predict
+{
+    "team1": "Morocco",
+    "team2": "Portugal"
+}
+```
+
+For the frontend, serve the folder with a static server (needed to load `translations.json`):
+
+```bash
+python -m http.server 8000
+```
+
+---
+
+## 🛠️ Tech stack
+
+`Python` · `scikit-learn` · `pandas` · `NumPy` · `Flask` · `Render` · `Netlify` · `HTML/CSS/JS`
+
+---
+
+## 📍 API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/predict` | Predict a match |
+| `GET`  | `/teams`   | List of WC 2026 teams |
+| `GET`  | `/health`  | Service status |
+
+---
+
+## ⚠️ Note
+
+Educational and demonstration project. Predictions are based on historical statistical patterns and do not account for injuries, motivation, day-to-day conditions, or all the unpredictability that makes football what it is.
+
+# IT
+
+# ⚽ World Cup 2026 — Match Predictor
+
 Sistema end-to-end di Machine Learning che predice il risultato e il punteggio delle partite dei Mondiali FIFA 2026, a partire da dati storici reali e dalla forma aggiornata delle squadre.
 
 🔗 **Live app:** _<inserisci URL Netlify>_
